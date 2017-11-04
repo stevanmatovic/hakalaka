@@ -31,13 +31,13 @@ def worker(msg: DataMessage) -> ResultsMessage:
     power = 0.0
     pv_mode = PVMode.ON
 
-    if msg.buying_price < 5 and msg.bessSOC < 0.95:        #jeftina struja i baterija nije puna -> punimo bateriju
+    if msg.buying_price < 5 and msg.bessSOC < 1:        #jeftina struja i baterija nije puna -> punimo bateriju
         power = chargeRate
 
-    if msg.bessSOC > 0.8 and msg.buying_price > 6:          #baterija puna i struja skupa -> koristimo bateriju
+    if msg.bessSOC > 0.63 and msg.buying_price > 6:          #baterija puna i struja skupa -> koristimo bateriju
         power = dischargeRate                               #TODO pokriti slucaj kada je prekid bio u zadnjih 8 sati
 
-    if msg.bessSOC < 0.3 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
+    if msg.bessSOC < 0.2 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
         power = chargeRate
 
     if msg.grid_status is False and msg.bessSOC > 0.05:     #ukoliko nestane struje koristi se baterija
