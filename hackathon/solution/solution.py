@@ -6,6 +6,7 @@ from hackathon.utils.utils import ResultsMessage, DataMessage, PVMode, \
 from hackathon.framework.http_server import prepare_dot_dir
 from hackathon.solution import test
 
+import matplotlib as plt
 chargeRate = -1.0
 dischargeRate = 2.0
 
@@ -14,6 +15,8 @@ def countNoPower(msg: DataMessage):
         test.counter = 0
     else:
         test.counter = test.counter + 1
+
+list =[]
 
 def worker(msg: DataMessage) -> ResultsMessage:
     # breakCounterLs
@@ -57,6 +60,15 @@ def worker(msg: DataMessage) -> ResultsMessage:
             power = chargeRate
         elif msg.buying_price > 6 and msg.bessSOC > 0.15 and msg.selling_price > 1:
             power = dischargeRate*1.5
+
+    if msg.grid_status is False and msg.solar_production < 1.75:
+        load2 = False
+
+    if msg.grid_status is False and msg.solar_production >= 1.75 and msg.solar_production < 4.6:
+        load3 = False
+
+    if msg.bessOverload is True:
+
 
     return ResultsMessage(data_msg=msg,
                           load_one=load1,
