@@ -31,10 +31,12 @@ def worker(msg: DataMessage) -> ResultsMessage:
     power = 0.0
     pv_mode = PVMode.ON
 
-    if msg.buying_price < 5 and msg.bessSOC < 0.95:        #jeftina struja i baterija nije puna -> punimo bateriju
-        power = chargeRate
+    if msg.buying_price < 5 and msg.bessSOC < 1:        #jeftina struja i baterija nije puna -> punimo bateriju
+        power = chargeRate*0.79
+    if msg.buying_price < 5 and msg.bessSOC < 1 and msg.selling_price < 1 and msg.solar_production > 2:        #jeftina struja i baterija nije puna -> punimo bateriju
+        power = chargeRate*1.3
 
-    if msg.bessSOC > 0.8 and msg.buying_price > 6:          #baterija puna i struja skupa -> koristimo bateriju
+    if msg.bessSOC > 0.63 and msg.buying_price > 6:          #baterija puna i struja skupa -> koristimo bateriju
         power = dischargeRate                               #TODO pokriti slucaj kada je prekid bio u zadnjih 8 sati
 
     if msg.bessSOC < 0.3 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
@@ -43,14 +45,14 @@ def worker(msg: DataMessage) -> ResultsMessage:
     if msg.grid_status is False and msg.bessSOC > 0.05:     #ukoliko nestane struje koristi se baterija
         power = 6.0
 
-    if msg.buying_price > 6 and msg.current_load > 2.5:
+    if msg.buying_price > 6 and msg.current_load > 2.5:     #totovo
         load3 = False
     elif msg.current_load > 6 and msg.buying_price < 6:
         load3 = False
     else:
         load3 = True
 
-    if(test.counter >= 1 and test.counter <= 360):
+    if test.counter >= 1 and test.counter <= 400:              #ako je dugo bilo struje mozes malo vise da prodajes
         if(msg.buying_price < 6 and msg.bessSOC < 0.9):
             power = chargeRate
         elif msg.buying_price > 6 and msg.bessSOC > 0.15 and msg.selling_price > 1:
