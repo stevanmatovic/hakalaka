@@ -7,7 +7,8 @@ from hackathon.framework.http_server import prepare_dot_dir
 
 chargeRate = -1.0
 dischargeRate = 2.0
-breakCounter = 0
+
+
 
 def worker(msg: DataMessage) -> ResultsMessage:
     """TODO: This function should be implemented by contestants."""
@@ -20,6 +21,8 @@ def worker(msg: DataMessage) -> ResultsMessage:
     load3 = True
     power = 0.0
     pv_mode = PVMode.ON
+
+
 
     if msg.buying_price < 5 and msg.bessSOC < 0.95:        #jeftina struja i baterija nije puna -> punimo bateriju
         power = chargeRate
@@ -39,11 +42,6 @@ def worker(msg: DataMessage) -> ResultsMessage:
         load3 = False
     else:
         load3 = True
-
-    if msg.grid_status is False:
-        breakCounter = 0
-    else:
-        breakCounter = breakCounter + 1
 
     return ResultsMessage(data_msg=msg,
                           load_one=load1,
