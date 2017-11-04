@@ -4,13 +4,22 @@ from hackathon.utils.control import Control
 from hackathon.utils.utils import ResultsMessage, DataMessage, PVMode, \
     TYPHOON_DIR, config_outs
 from hackathon.framework.http_server import prepare_dot_dir
+from hackathon.solution import test
 
 chargeRate = -1.0
 dischargeRate = 2.0
 
-
+def countNoPower(msg: DataMessage):
+    if msg.grid_status == 0:
+        test.counter = 0
+    else:
+        test.counter = test.counter + 1
 
 def worker(msg: DataMessage) -> ResultsMessage:
+    # breakCounterLs
+    countNoPower(msg)
+    # racunamo razmak trenutno mesta do zadnje nule
+
     """TODO: This function should be implemented by contestants."""
     # Details about DataMessage and ResultsMessage objects can be found in /utils/utils.py
     msg.current_load
@@ -21,8 +30,6 @@ def worker(msg: DataMessage) -> ResultsMessage:
     load3 = True
     power = 0.0
     pv_mode = PVMode.ON
-
-
 
     if msg.buying_price < 5 and msg.bessSOC < 0.95:        #jeftina struja i baterija nije puna -> punimo bateriju
         power = chargeRate
@@ -42,6 +49,12 @@ def worker(msg: DataMessage) -> ResultsMessage:
         load3 = False
     else:
         load3 = True
+
+    if(test.counter >= 1 and test.counter <= 360):
+        if(msg.buying_price < 6 and msg.bessSOC < 0.9):
+            power = chargeRate
+        elif msg.buying_price > 6 and msg.bessSOC > 0.15 and msg.selling_price > 1:
+            power = dischargeRate*1.5
 
     return ResultsMessage(data_msg=msg,
                           load_one=load1,
