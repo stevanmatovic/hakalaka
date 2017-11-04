@@ -6,10 +6,9 @@ from hackathon.utils.utils import ResultsMessage, DataMessage, PVMode, \
 from hackathon.framework.http_server import prepare_dot_dir
 from hackathon.solution import test
 
+import matplotlib as plt
 chargeRate = -1.0
 dischargeRate = 2.0
-
-list=[]
 
 def countNoPower(msg: DataMessage):
     if msg.grid_status == 0:
@@ -17,12 +16,12 @@ def countNoPower(msg: DataMessage):
     else:
         test.counter = test.counter + 1
 
+list =[]
+
 def worker(msg: DataMessage) -> ResultsMessage:
     # breakCounterLs
     countNoPower(msg)
     # racunamo razmak trenutno mesta do zadnje nule
-
-    list.append(1)
 
     """TODO: This function should be implemented by contestants."""
     # Details about DataMessage and ResultsMessage objects can be found in /utils/utils.py
@@ -38,7 +37,7 @@ def worker(msg: DataMessage) -> ResultsMessage:
     if msg.buying_price < 5 and msg.bessSOC < 1:        #jeftina struja i baterija nije puna -> punimo bateriju
         power = chargeRate*0.79
     if msg.buying_price < 5 and msg.bessSOC < 1 and msg.selling_price < 1 and msg.solar_production > 2:        #jeftina struja i baterija nije puna -> punimo bateriju
-        power = chargeRate*6
+        power = chargeRate*1.3
 
     if msg.bessSOC > 0.63 and msg.buying_price > 6:          #baterija puna i struja skupa -> koristimo bateriju
         power = dischargeRate                               #TODO pokriti slucaj kada je prekid bio u zadnjih 8 sati
@@ -61,25 +60,12 @@ def worker(msg: DataMessage) -> ResultsMessage:
             power = chargeRate
         elif msg.buying_price > 6 and msg.bessSOC > 0.15 and msg.selling_price > 1:
             power = dischargeRate*1.5
-    #kupujemo po jeftinoj
-    if msg.buying_price < 5 and msg.mainGridPower > 0 :
-        test.sumCheap += msg.mainGridPower * msg.buying_price / 60;
-    # kupujemo po skupoj
-    if msg.buying_price > 5 and msg.mainGridPower > 0:
-        test.sumExp += msg.mainGridPower * msg.buying_price / 60;
 
-    if msg.mainGridPower < 0 and msg.selling_price < 1:
-        test.sumSoldCheap += msg.mainGridPower * msg.selling_price / 60
+    if msg.grid_status == 0.0 and msg.solar_production < 1.75:
+        load2 = False
 
-    if msg.mainGridPower < 0 and msg.selling_price > 1:
-        test.sumSoldExp += msg.mainGridPower * msg.selling_price / 60
-
-
-    if len(list) == 1439:
-        f = open('helloworld.txt', 'w')
-        f.write("\nSum Exp: " + str(test.sumExp) +" \nSum Cheap: " + str(test.sumCheap) + "\n sumSoldCheap: " + str(test.sumSoldCheap) + "\n sumSoldExp: " + str(test.sumSoldExp))
-        f.write(" \nZbir: " + str(test.sumCheap + test.sumExp + test.sumSoldExp))
-        f.close()
+    if msg.grid_status == 0.0 and msg.solar_production >= 1.75 and msg.solar_production < 4.6:
+        load3 = False
 
 
     return ResultsMessage(data_msg=msg,
