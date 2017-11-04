@@ -5,19 +5,52 @@ from hackathon.utils.utils import ResultsMessage, DataMessage, PVMode, \
     TYPHOON_DIR, config_outs
 from hackathon.framework.http_server import prepare_dot_dir
 
+chargeRate = -1.0
+dischargeRate = 2.0
+breakCounter = 0
 
 def worker(msg: DataMessage) -> ResultsMessage:
     """TODO: This function should be implemented by contestants."""
     # Details about DataMessage and ResultsMessage objects can be found in /utils/utils.py
-
+    msg.current_load
     # Dummy result is returned in every cycle here
-    return ResultsMessage(data_msg=msg,
-                          load_one=True,
-                          load_two=True,
-                          load_three=True,
-                          power_reference=0.0,
-                          pv_mode=PVMode.ON)
+    #osnovna podela da li ima struje ili ne
+    load1 = True
+    load2 = True
+    load3 = True
+    power = 0.0
+    pv_mode = PVMode.ON
 
+    if msg.buying_price < 5 and msg.bessSOC < 0.95:        #jeftina struja i baterija nije puna -> punimo bateriju
+        power = chargeRate
+
+    if msg.bessSOC > 0.8 and msg.buying_price > 6:          #baterija puna i struja skupa -> koristimo bateriju
+        power = dischargeRate                               #TODO pokriti slucaj kada je prekid bio u zadnjih 8 sati
+
+    if msg.bessSOC < 0.3 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
+        power = chargeRate
+
+    if msg.grid_status is False and msg.bessSOC > 0.05:     #ukoliko nestane struje koristi se baterija
+        power = 6.0
+
+    if msg.buying_price > 6 and msg.current_load > 2.5:
+        load3 = False
+    elif msg.current_load > 6 and msg.buying_price < 6:
+        load3 = False
+    else:
+        load3 = True
+
+    if msg.grid_status is False:
+        breakCounter = 0
+    else:
+        breakCounter = breakCounter + 1
+
+    return ResultsMessage(data_msg=msg,
+                          load_one=load1,
+                          load_two=load2,
+                          load_three=load3,
+                          power_reference=power,
+                          pv_mode=pv_mode)
 
 def run(args) -> None:
     prepare_dot_dir()
