@@ -27,6 +27,16 @@ def countNoPower(msg: DataMessage):
 
 list =[]
 
+def calcPerc(load1, load2, load3):
+    perc = 0.0
+    if load1:
+        perc += 0.2
+    if load2:
+        perc += 0.5
+    if load3:
+        perc += 0.3
+    return perc
+
 def worker(msg: DataMessage) -> ResultsMessage:
     states.calc_solar_state(msg)
     # breakCounterLs
@@ -44,24 +54,9 @@ def worker(msg: DataMessage) -> ResultsMessage:
     power = 0.0
     pv_mode = PVMode.ON
 
-    # if msg.buying_price < 5 and msg.bessSOC < 1 :        #jeftina struja i baterija nije puna -> punimo bateriju
-    #     power = chargeRate*1.3
-    #
-    # if msg.buying_price < 5 and msg.bessSOC < 1 and msg.selling_price < 1\
-    #         and msg.solar_production > 2:       #jeftina struja i baterija nije puna i radi solarna -> punimo bateriju vise
-    #     power = chargeRate*2
 
-    if msg.current_load < 2.5 and msg.solar_production > msg.current_load:
-        power = msg.current_load - msg.solar_production
 
-    if msg.bessSOC > 0.2 and msg.buying_price > 6 and msg.solar_production < msg.current_load:     #baterija puna i struja skupa i nemamo viska od solar prod -> koristimo bateriju
-         power = -(msg.solar_production - msg.current_load)
 
-    if msg.bessSOC < 0.2 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
-        power = chargeRate
-
-    if c.solar_state == states.SolarState.BEFORE and msg.bessSOC < 0.99:   # pre jutra se puni baterija
-        power = -6.0
 
 
     if msg.buying_price > 6 and msg.current_load > 2.5:     #totovo
@@ -103,6 +98,18 @@ def worker(msg: DataMessage) -> ResultsMessage:
     if msg.current_load > 8.5 and msg.grid_status == 0.0:
         load2 = False
         load3 = False
+
+    if msg.current_load < 2.5 and msg.solar_production > msg.current_load:
+        power = msg.current_load - msg.solar_production
+
+    if msg.bessSOC > 0.2 and msg.buying_price > 6 and msg.solar_production < msg.current_load * calcPerc(load1 ,load2, load3):     #baterija puna i struja skupa i nemamo viska od solar prod -> koristimo bateriju
+         power = -(msg.solar_production - msg.current_load * calcPerc(load1 ,load2, load3))
+
+    if msg.bessSOC < 0.2 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
+        power = chargeRate
+
+    if c.solar_state == states.SolarState.BEFORE and msg.bessSOC < 0.99:   # pre jutra se puni baterija
+        power = -6.0
 
     return ResultsMessage(data_msg=msg,
                           load_one=load1,
