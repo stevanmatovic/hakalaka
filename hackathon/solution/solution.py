@@ -87,8 +87,10 @@ def worker(msg: DataMessage) -> ResultsMessage:
             if abs(c.l2_off_cost - c.l2_on_cost) < 0.5:  # CLOSE ENOUGH
                 c.LOAD_2_STATE = 2  # STATE OVERTAKING
         elif c.LOAD_2_STATE == 2:
-            load2 = False
-            if 6.0 <= msg.current_load < 6.1:
+            if msg.current_load > 6.0:
+                load2 = False
+            #if 6.0 <= msg.current_load < 6.1:
+            else:
                 c.LOAD_2_STATE = 0
                 load2 = True
 
@@ -110,6 +112,9 @@ def worker(msg: DataMessage) -> ResultsMessage:
 
     if c.solar_state == states.SolarState.BEFORE and msg.bessSOC < 0.99:   # pre jutra se puni baterija
         power = -6.0
+
+    if load2 == False and msg.id > 1800:
+        print('hi mom')
 
     return ResultsMessage(data_msg=msg,
                           load_one=load1,
