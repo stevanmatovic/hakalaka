@@ -9,3 +9,4 @@ sumExp = 0
 sumSoldCheap = 0
 sumSoldExp = 0
 
+solar_state = 0
