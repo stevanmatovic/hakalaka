@@ -54,16 +54,14 @@ def worker(msg: DataMessage) -> ResultsMessage:
     if msg.current_load < 2.5 and msg.solar_production > msg.current_load:
         power = msg.current_load - msg.solar_production
 
-    if msg.bessSOC > 0.3 and msg.buying_price > 6 and msg.solar_production < msg.current_load:     #baterija puna i struja skupa i nemamo viska od solar prod -> koristimo bateriju
+    if msg.bessSOC > 0.2 and msg.buying_price > 6 and msg.solar_production < msg.current_load:     #baterija puna i struja skupa i nemamo viska od solar prod -> koristimo bateriju
          power = -(msg.solar_production - msg.current_load)
 
-    if msg.bessSOC < 0.3 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
+    if msg.bessSOC < 0.2 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
         power = chargeRate
 
-    if c.solar_state == states.SolarState.BEFORE:
-        power = chargeRate
-        if msg.grid_status == 0:
-            print('hi mom')
+    if c.solar_state == states.SolarState.BEFORE and msg.bessSOC < 0.99:   # pre jutra se puni baterija
+        power = -6.0
 
 
     if msg.buying_price > 6 and msg.current_load > 2.5:     #totovo
@@ -81,7 +79,7 @@ def worker(msg: DataMessage) -> ResultsMessage:
 
 
     if msg.buying_price > 7:
-        if 6.5 <= msg.current_load < 6.7 and msg.bessSOC < 0.6:  # LOAD_2 HIGH_COST BREAKPOINT
+        if 6.5 <= msg.current_load < 6.7 and msg.bessSOC < 0.6 and msg.id % 1440 > 17*60:  # LOAD_2 HIGH_COST BREAKPOINT
             if c.LOAD_2_STATE == 0:  # STATE OFF
                 c.LOAD_2_STATE = 1
                 c.l2_off_cost = 4
@@ -99,36 +97,12 @@ def worker(msg: DataMessage) -> ResultsMessage:
                 c.LOAD_2_STATE = 0
                 load2 = True
 
-
-
-    if msg.grid_status == 0.0 and msg.solar_production < 1.75:
-        load2 = False
-
     if msg.grid_status == 0:
         load3 = False
 
-    sumPenalty = 0
-    if(load2):
-        sumPenalty += 0.4
-    if(load3):
-        sumPenalty += 0.1
-
-    listPenalty.append(sumPenalty)
-    listSoc.append(msg.bessSOC)
-    listLoad.append(msg.current_load)
-    listSolar.append(msg.solar_production)
-    if(len(listPenalty)==6500):
-        answer = ""
-        count = 0
-        for i in listSoc:
-            answer += str(count) + " "  + str(i) + " " + str(listPenalty[count]) + " "  + str(listSolar[count]) + " " + str(listLoad[count]) +"\n"
-            count += 1
-
-        f = open('soc.txt', 'w')
-        f.write("iteration soc penalty solar load")
-        f.write(answer)
-        f.close()
-
+    if msg.current_load > 8.5 and msg.grid_status == 0.0:
+        load2 = False
+        load3 = False
 
     return ResultsMessage(data_msg=msg,
                           load_one=load1,

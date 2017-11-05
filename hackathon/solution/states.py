@@ -13,6 +13,6 @@ def calc_solar_state(msg: DataMessage):
     if hours < 7*60:
         c.solar_state = SolarState.BEFORE
     elif hours < 19*60:
-        c.solar_state = SolarState.AFTER
-    else:
         c.solar_state = SolarState.DURING
+    else:
+        c.solar_state = SolarState.AFTER
