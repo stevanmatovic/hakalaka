@@ -54,20 +54,47 @@ def worker(msg: DataMessage) -> ResultsMessage:
         load3 = False
     else:
         load3 = True
+    #
+    # if test.counter >= 1 and test.counter <= 360:              #ako je dugo bilo struje mozes malo vise da prodajes
+    #     if(msg.buying_price < 6 and msg.bessSOC < 0.9):
+    #         power = chargeRate
+    #     elif msg.buying_price > 6 and msg.bessSOC > 0.15 and msg.selling_price > 1:
+    #         power = dischargeRate*1.5
 
-    if test.counter >= 1 and test.counter <= 400:              #ako je dugo bilo struje mozes malo vise da prodajes
-        if(msg.buying_price < 6 and msg.bessSOC < 0.9):
-            power = chargeRate
-        elif msg.buying_price > 6 and msg.bessSOC > 0.15 and msg.selling_price > 1:
-            power = dischargeRate*1.5
+
+    if msg.buying_price > 7:
+        if 6.5 <= msg.current_load < 6.7:  # LOAD_2 HIGH_COST BREAKPOINT
+            if test.LOAD_2_STATE == 0:  # STATE OFF
+                test.LOAD_2_STATE = 1
+                test.l2_off_cost = 4
+                test.l2_on_cost = 0.4
+                load2 = False
+        if test.LOAD_2_STATE == 1:  # STATE GAINING
+            load2 = False
+            test.l2_off_cost += 0.4
+            test.l2_on_cost += msg.current_load * 0.5 * 8 / 60
+            if abs(test.l2_off_cost - test.l2_on_cost) < 0.5:  # CLOSE ENOUGH
+                test.LOAD_2_STATE = 2  # STATE OVERTAKING
+        elif test.LOAD_2_STATE == 2:
+            load2 = False
+            if 6.0 <= msg.current_load < 6.1:
+                test.LOAD_2_STATE = 0
+                load2 = True
+
 
     if msg.grid_status is False and msg.solar_production < 1.75:
+        print(msg.solar_production)
         load2 = False
 
-    if msg.grid_status is False and msg.solar_production >= 1.75 and msg.solar_production < 4.6:
+    if msg.grid_status is False and 1.75 <= msg.solar_production < 4.6:
+        print(msg.solar_production)
         load3 = False
 
-    if msg.bessOverload is True:
+    if msg.grid_status is True:
+        print(msg.solar_production)
+
+    if msg.mainGridPower == 0.0:
+        print('00', msg.solar_production)
 
 
     return ResultsMessage(data_msg=msg,
