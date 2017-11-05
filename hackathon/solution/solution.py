@@ -104,10 +104,10 @@ def worker(msg: DataMessage) -> ResultsMessage:
     if msg.current_load < 2.5 and msg.solar_production > msg.current_load:
         power = msg.current_load - msg.solar_production
 
-    if msg.bessSOC > 0.2 and msg.buying_price > 6 and msg.solar_production < msg.current_load * calcPerc(load1 ,load2, load3):     #baterija puna i struja skupa i nemamo viska od solar prod -> koristimo bateriju
+    if msg.bessSOC > 0.192 and msg.buying_price > 6 and msg.solar_production < msg.current_load * calcPerc(load1 ,load2, load3):     #baterija puna i struja skupa i nemamo viska od solar prod -> koristimo bateriju
          power = -(msg.solar_production - msg.current_load * calcPerc(load1 ,load2, load3))
 
-    if msg.bessSOC < 0.2 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
+    if msg.bessSOC < 0.192 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
         power = chargeRate
 
     if c.solar_state == states.SolarState.BEFORE and msg.bessSOC < 0.99:   # pre jutra se puni baterija
