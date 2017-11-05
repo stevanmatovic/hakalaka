@@ -6,10 +6,18 @@ from hackathon.utils.utils import ResultsMessage, DataMessage, PVMode, \
 from hackathon.framework.http_server import prepare_dot_dir
 from hackathon.solution import test
 
+import matplotlib.pyplot as plt
+
+
 import matplotlib as plt
 chargeRate = -1.0
 dischargeRate = 2.0
 
+listPenalty = []
+listSoc = []
+listSolar = []
+listPrice = []
+listLoad = []
 def countNoPower(msg: DataMessage):
     if msg.grid_status == 0:
         test.counter = 0
@@ -68,7 +76,7 @@ def worker(msg: DataMessage) -> ResultsMessage:
 
 
     if msg.buying_price > 7:
-        if 6.5 <= msg.current_load < 6.7:  # LOAD_2 HIGH_COST BREAKPOINT
+        if 6.5 <= msg.current_load < 6.7 and msg.bessSOC < 0.7:  # LOAD_2 HIGH_COST BREAKPOINT
             if test.LOAD_2_STATE == 0:  # STATE OFF
                 test.LOAD_2_STATE = 1
                 test.l2_off_cost = 4
@@ -91,8 +99,30 @@ def worker(msg: DataMessage) -> ResultsMessage:
     if msg.grid_status == 0.0 and msg.solar_production < 1.75:
         load2 = False
 
-    if msg.grid_status == 0.0 and msg.solar_production >= 1.75 and msg.solar_production < 4.6:
+    if msg.grid_status == 0:
         load3 = False
+
+    sumPenalty = 0
+    if(load2):
+        sumPenalty += 0.4
+    if(load3):
+        sumPenalty += 0.1
+
+    listPenalty.append(sumPenalty)
+    listSoc.append(msg.bessSOC)
+    listLoad.append(msg.current_load)
+    listSolar.append(msg.solar_production)
+    if(len(listPenalty)==6500):
+        answer = ""
+        count = 0
+        for i in listSoc:
+            answer += str(count) + " "  + str(i) + " " + str(listPenalty[count]) + " "  + str(listSolar[count]) + " " + str(listLoad[count]) +"\n"
+            count += 1
+
+        f = open('soc.txt', 'w')
+        f.write("iteration soc penalty solar load")
+        f.write(answer)
+        f.close()
 
 
     return ResultsMessage(data_msg=msg,
