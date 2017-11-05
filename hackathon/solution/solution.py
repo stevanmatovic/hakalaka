@@ -82,12 +82,11 @@ def worker(msg: DataMessage) -> ResultsMessage:
                 load2 = True
 
 
-    if msg.grid_status is False and msg.solar_production < 1.75:
-        print(msg.solar_production)
+
+    if msg.grid_status == 0.0 and msg.solar_production < 1.75:
         load2 = False
 
-    if msg.grid_status is False and 1.75 <= msg.solar_production < 4.6:
-        print(msg.solar_production)
+    if msg.grid_status == 0.0 and msg.solar_production >= 1.75 and msg.solar_production < 4.6:
         load3 = False
 
     if msg.grid_status is True:
@@ -95,6 +94,8 @@ def worker(msg: DataMessage) -> ResultsMessage:
 
     if msg.mainGridPower == 0.0:
         print('00', msg.solar_production)
+
+
 
 
     return ResultsMessage(data_msg=msg,
