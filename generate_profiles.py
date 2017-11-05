@@ -10,11 +10,11 @@ __license__ = "MIT"
 def generate_profiles():
     LOAD_SCALES = [1.0, 1.1, 0.8, 1.2, 0.9]
     SOLAR_SCALES = [1.3, 0.4, 0.8, 0.9, 1.1]
-    BLACKOUTS = [[[11, 11.75]],
-                 [],
-                 [[2.5,3]],
+    BLACKOUTS = [[[11, 12]],
+                 [[9,10]],
+                 [[2.5,3.5]],
                  [[20,21]],
-                 [],
+                 [[16,17]],
                 ]
 
     PROFILES = []

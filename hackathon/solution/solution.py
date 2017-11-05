@@ -34,19 +34,24 @@ def worker(msg: DataMessage) -> ResultsMessage:
     power = 0.0
     pv_mode = PVMode.ON
 
-    if msg.buying_price < 5 and msg.bessSOC < 1:        #jeftina struja i baterija nije puna -> punimo bateriju
-        power = chargeRate*0.79
-    if msg.buying_price < 5 and msg.bessSOC < 1 and msg.selling_price < 1 and msg.solar_production > 2:        #jeftina struja i baterija nije puna -> punimo bateriju
-        power = chargeRate*1.3
+    # if msg.buying_price < 5 and msg.bessSOC < 1 :        #jeftina struja i baterija nije puna -> punimo bateriju
+    #     power = chargeRate*1.3
+    #
+    # if msg.buying_price < 5 and msg.bessSOC < 1 and msg.selling_price < 1\
+    #         and msg.solar_production > 2:       #jeftina struja i baterija nije puna i radi solarna -> punimo bateriju vise
+    #     power = chargeRate*2
 
-    if msg.bessSOC > 0.63 and msg.buying_price > 6:          #baterija puna i struja skupa -> koristimo bateriju
-        power = dischargeRate                               #TODO pokriti slucaj kada je prekid bio u zadnjih 8 sati
+    if msg.current_load < 2.5 and msg.solar_production > msg.current_load:
+        power = msg.current_load - msg.solar_production
+
+    if msg.bessSOC > 0.48 and msg.buying_price > 6 and msg.solar_production < msg.current_load:     #baterija puna i struja skupa i nemamo viska od solar prod -> koristimo bateriju
+         power = -(msg.solar_production - msg.current_load)
 
     if msg.bessSOC < 0.3 and msg.grid_status is True:       #ukoliko je baterija jako prazna i ima struje punimo bateriju
         power = chargeRate
 
-    if msg.grid_status is False and msg.bessSOC > 0.05:     #ukoliko nestane struje koristi se baterija
-        power = 6.0
+
+
 
     if msg.buying_price > 6 and msg.current_load > 2.5:     #totovo
         load3 = False
@@ -88,14 +93,6 @@ def worker(msg: DataMessage) -> ResultsMessage:
 
     if msg.grid_status == 0.0 and msg.solar_production >= 1.75 and msg.solar_production < 4.6:
         load3 = False
-
-    if msg.grid_status is True:
-        print(msg.solar_production)
-
-    if msg.mainGridPower == 0.0:
-        print('00', msg.solar_production)
-
-
 
 
     return ResultsMessage(data_msg=msg,
